@@ -8,3 +8,7 @@ GET {{HOST}}/snippet/view/12
 
 ###
 GET {{HOST}}/snippet/create
+
+###
+POST {{HOST}}/snippet/create
+Content-Type: application/json

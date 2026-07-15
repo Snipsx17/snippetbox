@@ -16,12 +16,10 @@ func NewSnippetHandler() *SnippetHandler {
 
 // handle home route "/"
 func (h *SnippetHandler) Home(w http.ResponseWriter, r *http.Request) {
-	log.Printf("[%s] %s", r.Method, r.URL.Path)
 	w.Write([]byte("Hello from  Snippetbox app! 🚀"))
 }
 
-func (h *SnippetHandler) ViewSnippet(w http.ResponseWriter, r *http.Request) {
-	log.Printf("[%s] %s", r.Method, r.URL.Path)
+func (h *SnippetHandler) View(w http.ResponseWriter, r *http.Request) {
 
 	id, err := strconv.Atoi(r.PathValue("id"))
 	if err != nil || id < 1 {
@@ -33,25 +31,38 @@ func (h *SnippetHandler) ViewSnippet(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(response))
 }
 
-func (h *SnippetHandler) CreateSnippet(w http.ResponseWriter, r *http.Request) {
-	log.Printf("[%s] %s", r.Method, r.URL.Path)
+func (h *SnippetHandler) Create(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("Create snippet"))
 }
 
-var Handler = NewSnippetHandler()
+func (h *SnippetHandler) CreatePost(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(201)
+	w.Write([]byte("Create snippet POST"))
+}
+
+// middleware
+func LogRequest(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		log.Printf("[%s] %s", r.Method, r.URL.Path)
+		next.ServeHTTP(w, r)
+	})
+}
+
+var snippetHandler = NewSnippetHandler()
 
 func main() {
 	mux := http.NewServeMux()
 
 	//routes
-	mux.HandleFunc("/{$}", Handler.Home) // {$} restrict this route to strict matches on / only
-	mux.HandleFunc("/snippet/view/{id}", Handler.ViewSnippet)
-	mux.HandleFunc("/snippet/create", Handler.CreateSnippet)
+	mux.HandleFunc("GET /{$}", snippetHandler.Home) // {$} restrict this route to strict matches on / only
+	mux.HandleFunc("GET /snippet/view/{id}", snippetHandler.View)
+	mux.HandleFunc("GET /snippet/create", snippetHandler.Create)
+	mux.HandleFunc("POST /snippet/create", snippetHandler.CreatePost)
 
 	PORT := "4000"
 
 	log.Print("Server running on localhost:" + PORT)
-	err := http.ListenAndServe(":4000", mux)
+	err := http.ListenAndServe(":4000", LogRequest(mux))
 	// Other way to run the server ↓↓
 	// log.Fatal(http.ListenAndServe(":"+PORT, mux))
 	log.Fatal(err)
