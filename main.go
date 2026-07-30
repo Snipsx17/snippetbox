@@ -1,7 +1,7 @@
 package main
 
 import (
-	"fmt"
+	"encoding/json"
 	"log"
 	"net/http"
 	"strconv"
@@ -16,6 +16,7 @@ func NewSnippetHandler() *SnippetHandler {
 
 // handle home route "/"
 func (h *SnippetHandler) Home(w http.ResponseWriter, r *http.Request) {
+	w.Header().Add("Server", "GO")
 	w.Write([]byte("Hello from  Snippetbox app! 🚀"))
 }
 
@@ -27,8 +28,22 @@ func (h *SnippetHandler) View(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response := fmt.Sprintf("View snippet with ID: %d", id)
-	w.Write([]byte(response))
+	resp := struct {
+		Id   int    `json:"id"`
+		Name string `json:"name"`
+	}{
+		Id:   id,
+		Name: "Uberth",
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	//fmt.Fprintf(w, `{"id": "%d", "name": "Uberth"}`, id)
+	//w.Write([]byte(response))
+	if err := json.NewEncoder(w).Encode(resp); err != nil {
+		http.Error(w, "", http.StatusInternalServerError)
+		return
+	}
+
 }
 
 func (h *SnippetHandler) Create(w http.ResponseWriter, r *http.Request) {
@@ -48,10 +63,11 @@ func LogRequest(next http.Handler) http.Handler {
 	})
 }
 
-var snippetHandler = NewSnippetHandler()
-
 func main() {
 	mux := http.NewServeMux()
+
+	// handler
+	snippetHandler := NewSnippetHandler()
 
 	//routes
 	mux.HandleFunc("GET /{$}", snippetHandler.Home) // {$} restrict this route to strict matches on / only
@@ -62,7 +78,9 @@ func main() {
 	PORT := "4000"
 
 	log.Print("Server running on localhost:" + PORT)
-	err := http.ListenAndServe(":4000", LogRequest(mux))
+
+	serverWrapper := LogRequest(mux)
+	err := http.ListenAndServe(":4000", serverWrapper)
 	// Other way to run the server ↓↓
 	// log.Fatal(http.ListenAndServe(":"+PORT, mux))
 	log.Fatal(err)
