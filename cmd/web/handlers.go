@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"html/template"
 	"log"
 	"net/http"
 	"strconv"
@@ -16,8 +17,27 @@ func NewSnippetHandler() *SnippetHandler {
 
 // handle home route "/"
 func (h *SnippetHandler) Home(w http.ResponseWriter, r *http.Request) {
-	w.Header().Add("Server", "GO")
-	w.Write([]byte("Hello from  Snippetbox app! 🚀"))
+
+	files := []string{
+		"./ui/html/base.html",
+		"./ui/html/pages/home.html",
+		"./ui/html/partials/nav.html",
+		"./ui/html/partials/footer.html",
+	}
+
+	ts, err := template.ParseFiles(files...)
+	if err != nil {
+		log.Print(err.Error())
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+
+	err = ts.ExecuteTemplate(w, "base", nil)
+	if err != nil {
+		log.Print(err.Error())
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+	}
+
 }
 
 func (h *SnippetHandler) View(w http.ResponseWriter, r *http.Request) {
@@ -53,35 +73,4 @@ func (h *SnippetHandler) Create(w http.ResponseWriter, r *http.Request) {
 func (h *SnippetHandler) CreatePost(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(201)
 	w.Write([]byte("Create snippet POST"))
-}
-
-// middleware
-func LogRequest(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		log.Printf("[%s] %s", r.Method, r.URL.Path)
-		next.ServeHTTP(w, r)
-	})
-}
-
-func main() {
-	mux := http.NewServeMux()
-
-	// handler
-	snippetHandler := NewSnippetHandler()
-
-	//routes
-	mux.HandleFunc("GET /{$}", snippetHandler.Home) // {$} restrict this route to strict matches on / only
-	mux.HandleFunc("GET /snippet/view/{id}", snippetHandler.View)
-	mux.HandleFunc("GET /snippet/create", snippetHandler.Create)
-	mux.HandleFunc("POST /snippet/create", snippetHandler.CreatePost)
-
-	PORT := "4000"
-
-	log.Print("Server running on localhost:" + PORT)
-
-	serverWrapper := LogRequest(mux)
-	err := http.ListenAndServe(":4000", serverWrapper)
-	// Other way to run the server ↓↓
-	// log.Fatal(http.ListenAndServe(":"+PORT, mux))
-	log.Fatal(err)
 }
