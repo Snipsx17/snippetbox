@@ -28,8 +28,8 @@ func main() {
 
 	log.Print("Server running on localhost:" + PORT)
 
-	// middleware
-	serverWrapper := LogRequest(mux)
+	// middlewares wrapper
+	serverWrapper := Chain(mux, Middlewares...)
 
 	// run server
 	/*
