@@ -18,9 +18,9 @@ func LogRequest(next http.Handler) http.Handler {
 
 func DisableFileServerListing(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		path := r.URL.Path
+		log.Print(r.URL.Path)
 
-		if strings.HasSuffix(path, "/") {
+		if strings.Contains(r.URL.Path, "/static/") && strings.HasSuffix(r.URL.Path, "/") {
 			http.NotFound(w, r)
 			return
 		}

@@ -74,3 +74,8 @@ func (h *SnippetHandler) CreatePost(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(201)
 	w.Write([]byte("Create snippet POST"))
 }
+
+func (h *SnippetHandler) DownloadCv(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Disposition", `attachment; filename="CV_Uberth_Hernandez.pdf"`)
+	http.ServeFile(w, r, "./internal/storage/cv/CV_Uberth_Hernandez_2026.pdf")
+}

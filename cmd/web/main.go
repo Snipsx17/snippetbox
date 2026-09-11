@@ -15,6 +15,9 @@ func main() {
 	fileServer := http.FileServer(http.Dir("./ui/static"))
 	mux.Handle("GET /static/", http.StripPrefix("/static", fileServer))
 
+	// serve static file
+	mux.HandleFunc("GET /download/uberth-cv", snippetHandler.DownloadCv)
+
 	//routes
 	/*
 	* {$} restrict this route to strict matches on / only
